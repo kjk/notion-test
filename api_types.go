@@ -5,8 +5,8 @@ import "encoding/json"
 // tries to follow https://github.com/makenotion/notion-sdk-js/blob/main/src/api-types.ts
 
 type PaginationParameters struct {
-	StartCursor string
-	PageSize    int
+	StartCursor string `json:"start_cursor"`
+	PageSize    int    `json:"page_size"`
 }
 
 type PaginatedList struct {
@@ -355,12 +355,12 @@ type Filter interface{}
 */
 type SinglePropertyFilter interface{}
 
-/*
- export interface CompoundFilter {
-	 or?: Filter[];
-	 and?: Filter[];
- }
+type CompoundFilter struct {
+	Or  []Filter `json:"or"`
+	And []Filter `json:"and"`
+}
 
+/*
  export interface SinglePropertyFilterBase {
 	 property: string;
  }

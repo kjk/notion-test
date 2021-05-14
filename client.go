@@ -37,18 +37,11 @@ type RequestParameters struct {
 	Auth string
 }
 
-type BlocksChildrenListParameters struct {
-	BlockID string `json:"block_id"`
-}
-
 type Client struct {
 	version    string
 	Auth       string
 	HTTPClient *http.Client
 }
-
-// type of Results is Block
-type BlocksChildrenListResponse PaginatedList
 
 func NewClient(opts ClientOptions) (*Client, error) {
 	res := &Client{
