@@ -1,5 +1,7 @@
 package notion
 
+import "encoding/json"
+
 // tries to follow https://github.com/makenotion/notion-sdk-js/blob/main/src/api-types.ts
 
 type PaginationParameters struct {
@@ -8,21 +10,23 @@ type PaginationParameters struct {
 }
 
 type PaginatedList struct {
-	Object     string // 'list',
-	Results    []APISingularObject
-	HasMore    bool
-	NextCursor string
+	Object     string                 `json:"object"` // 'list',
+	Results    []APISingularObject    `json:"-"`
+	ResultsRaw json.RawMessage        `json:"results"`
+	HasMore    bool                   `json:"has_more"`
+	NextCursor string                 `json:"next_cursor"`
+	RawJSON    map[string]interface{} `json:"-"`
 }
 
-// can be Database, Page, User, Block
+// can be: Database, Page, User, Block
 type APISingularObject interface {
 }
 
-// can be one of APISingularObject, PaginatedList
+// can be: APISingularObject, PaginatedList
 type APIObject interface {
 }
 
-// can be  ParagraphBlock, HeadingOneBlock,  HeadingTwoBlock, HeadingThreeBlock
+// can be: ParagraphBlock, HeadingOneBlock,  HeadingTwoBlock, HeadingThreeBlock
 // BulletedListItemBlock, NumberedListItemBlock, ToDoBlock, ToggleBlock, ChildPageBlock
 // UnsupportedBlock
 type Block interface {
@@ -31,16 +35,12 @@ type Block interface {
 }
 
 type BlockBase struct {
-	Object         string // 'block';
-	ID             string
-	Type           string
-	CreatedTime    string
-	LastEditedTime string
-	HasChildren    bool
-}
-
-type RichText struct {
-	// TODO: write me
+	Object         string `json:"object"` // 'block';
+	ID             string `json:"id"`
+	Type           string `json:"type"`
+	CreatedTime    string `json:"created_time"`
+	LastEditedTime string `json:"last_edited_time"`
+	HasChildren    bool   `json:"has_children"`
 }
 
 type ParagraphBlock struct {
@@ -388,8 +388,8 @@ type SinglePropertyFilter interface{}
  }
 
  export interface CheckboxFilter extends SinglePropertyFilterBase {
-	 equals?: boolean;
-	 does_not_equal?: boolean;
+	 equals?: bool
+	 does_not_equal?: bool
  }
 
  export interface SelectFilter extends SinglePropertyFilterBase {
@@ -466,14 +466,14 @@ type SinglePropertyFilter interface{}
 * Page
  */
 
-/*
- export interface Page {
-	 object: 'page',
-	 id: string;
-	 parent: Parent;
-	 properties: { [propertyName: string]: PropertyValue };
- }
-*/
+type Page struct {
+	Object string `json:"object"` // 'page',
+	ID     string `json:"id"`
+	Parent Parent `json:"parent"`
+	// TODO: fix me
+	//properties: { [propertyName: string]: PropertyValue };
+	Properties map[string]PropertyValue `json:"properties"`
+}
 
 /*
 * Parent
@@ -485,7 +485,7 @@ type Parent interface {
 
 type DatabaseParent struct {
 	Type       string `json:"type"` // 'database_id';
-	DatabaseID string
+	DatabaseID string `json:"database_id"`
 }
 
 type PageParent struct {
@@ -499,7 +499,6 @@ type WorkspaceParent struct {
 
 /*
  export type ParentInput = Omit<DatabaseParent, 'type'> |  Omit<PageParent, 'type'>;
- // TODO: use distributiveomit?
 */
 
 /*
@@ -526,12 +525,15 @@ type WorkspaceParent struct {
 	| CreatedByPropertyValue
 	| LastEditedTimePropertyValue
 	| LastEditedByPropertyValue;
+*/
+type PropertyValue interface{}
 
- export interface PropertyValueBase {
-	 id: string;
-	 type: string;
- }
+type PropertyValueBase struct {
+	ID   string `json:"id"`
+	Type string `json:"type"`
+}
 
+/*
  export interface TitlePropertyValue extends PropertyValueBase {
 	 type: 'title';
 	 title: RichText[];
@@ -588,7 +590,7 @@ type WorkspaceParent struct {
  }
  export interface BooleanFormulaValue {
 	 type: 'boolean';
-	 boolean: boolean;
+	 boolean: bool
  }
  export interface DateFormulaValue {
 	 type: 'date';
@@ -625,7 +627,7 @@ type WorkspaceParent struct {
 
  export interface CheckboxPropertyValue extends PropertyValueBase {
 	 type: 'checkbox';
-	 checkbox: boolean;
+	 checkbox: bool
  }
 
  export interface URLPropertyValue extends PropertyValueBase {
@@ -667,24 +669,30 @@ type WorkspaceParent struct {
 /*
 * Rich text object (output)
  */
+
+// RichTextText | RichTextMention | RichTextEquation;
+type RichText interface{}
+
+type RichTextBase struct {
+	PlainText   string       `json:"plain_text"`
+	Href        string       `json:"href"`
+	Annotations *Annotations `json:"annotations"`
+	Type        string       `json:"type"`
+}
+
+type RichTextText struct {
+	RichTextBase
+	//type: 'text';
+	Text *struct {
+		Content string `json:"content"`
+		Link    *struct {
+			Type string `json:"type"` // 'url'
+			URL  string `json:"url"`
+		} `json:"link"`
+	} `json:"text"`
+}
+
 /*
- export type RichText = RichTextText | RichTextMention | RichTextEquation;
-
- export interface RichTextBase {
-	 plain_text: string;
-	 href?: string;
-	 annotations: Annotations;
-	 type: string;
- }
-
- export interface RichTextText extends RichTextBase {
-	 type: 'text';
-	 text: {
-		 content: string;
-		 link?: { type: 'url'; url: string; };
-	 };
- }
-
  export interface RichTextMention extends RichTextBase {
 	 type: 'mention';
 	 mention: UserMention | PageMention | DatabaseMention | DateMention;
@@ -716,13 +724,13 @@ type WorkspaceParent struct {
 		 expression: string;
 	 };
  }
-
- export interface Annotations {
-	 bold: boolean;
-	 italic: boolean;
-	 strikethrough: boolean;
-	 underline: boolean;
-	 code: boolean;
-	 color: Color | BackgroundColor;
- }
 */
+
+type Annotations struct {
+	Bold          bool  `json:"bold"`
+	Italic        bool  `json:"italic"`
+	Strikethrough bool  `json:"strikethrough"`
+	Underline     bool  `json:"underline"`
+	Code          bool  `json:"code"`
+	Color         Color `json:"color"`
+}

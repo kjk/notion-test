@@ -3,22 +3,18 @@ package notion
 // tries to mimic https://github.com/makenotion/notion-sdk-js/blob/main/src/Client.ts
 
 import (
-	"errors"
+	"io"
 	"net/http"
 	"time"
 )
 
 const DefaultNotionVersion = "2021-05-13"
 
-type Logger interface {
-	Log(s string)
-}
-
 type ClientOptions struct {
 	Auth          string
-	Timeout       time.Time
+	Timeout       time.Duration
 	BaseURL       string
-	Logger        *Logger
+	Logger        io.Writer
 	Agent         string
 	NotionVersion string
 }
@@ -41,19 +37,32 @@ type RequestParameters struct {
 	Auth string
 }
 
-type Client struct {
-	version string
-	Auth    string
-	Http    *http.Client
+type BlocksChildrenListParameters struct {
+	BlockID string `json:"block_id"`
 }
 
-func NewClient(auth string) (*Client, error) {
-	if auth == "" {
-		return nil, errors.New("needs a valid token")
-	}
+type Client struct {
+	version    string
+	Auth       string
+	HTTPClient *http.Client
+}
+
+// type of Results is Block
+type BlocksChildrenListResponse PaginatedList
+
+func NewClient(opts ClientOptions) (*Client, error) {
 	res := &Client{
-		version: VERSION,
-		Auth:    auth,
+		version: DefaultNotionVersion,
 	}
+	if opts.NotionVersion != "" {
+		res.version = opts.NotionVersion
+	}
+	res.Auth = opts.Auth
+
 	return res, nil
+}
+
+func (c *Client) BlocksList(args *BlocksChildrenListParameters) (*BlocksChildrenListResponse, error) {
+
+	return nil, nil
 }
